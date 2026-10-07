@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Veja suas medalhas MathPlay, o que você já conquistou e os próximos desafios." />
+    <title>Minhas conquistas | MathPlay Solutions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/achievements.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container nav-wrap">
+        <a class="brand" href="/" aria-label="MathPlay Solutions por Rocckouware - início">
+          <img class="brand-logo" src="/rocckouware-logo.png" alt="Logo da Rocckouware" />
+          <span class="brand-copy">
+            <strong>MathPlay Solutions</strong>
+            <span>por Rocckouware</span>
+          </span>
+        </a>
+        <nav class="nav" aria-label="Navegação principal">
+          <a href="/">Início</a>
+          <a href="/#games">Jogos</a>
+          <a href="/#dashboard">Painel</a>
+          <a href="/conquistas" aria-current="page">Conquistas</a>
+        </nav>
+        <a class="secondary-button achievements-home-link" href="/">Voltar ao início</a>
+      </div>
+    </header>
+
+    <main class="container achievements-page">
+      <section class="achievements-hero">
+        <p class="eyebrow">Suas vitórias</p>
+        <h1>Galeria de conquistas</h1>
+        <p class="achievements-lead">Acompanhe suas medalhas, veja o que já desbloqueou e escolha seu próximo desafio.</p>
+
+        <div class="achievement-progress-card">
+          <div class="achievement-progress-copy">
+            <div>
+              <strong id="achievementProgressText">Carregando suas conquistas...</strong>
+              <span id="achievementProgressPercent"></span>
+            </div>
+            <span class="achievement-progress-count" id="achievementProgressCount"></span>
+          </div>
+          <div
+            id="achievementProgressTrack"
+            class="achievement-progress-track"
+            role="progressbar"
+            aria-label="Progresso das conquistas"
+            aria-valuemin="0"
+            aria-valuemax="50"
+            aria-valuenow="0"
+          >
+            <span id="achievementProgressBar"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="achievement-summary" aria-label="Resumo das conquistas">
+        <article class="achievement-summary-card">
+          <span>Desbloqueadas</span>
+          <strong id="unlockedCount">—</strong>
+        </article>
+        <article class="achievement-summary-card">
+          <span>Para conquistar</span>
+          <strong id="lockedCount">—</strong>
+        </article>
+        <article class="achievement-summary-card">
+          <span>Tipos de conquista</span>
+          <strong id="categoryCount">—</strong>
+        </article>
+      </section>
+
+      <section class="achievement-section">
+        <div class="achievement-section-heading">
+          <div>
+            <p class="eyebrow">Coleção</p>
+            <h2>Todas as medalhas</h2>
+          </div>
+          <label class="achievement-filter-label" for="achievementFilter">
+            Mostrar
+            <select id="achievementFilter">
+              <option value="todas">Todas</option>
+              <option value="desbloqueadas">Desbloqueadas</option>
+              <option value="bloqueadas">Bloqueadas</option>
+            </select>
+          </label>
+        </div>
+        <p id="achievementStatus" class="achievement-status" role="status" aria-live="polite"></p>
+        <div id="achievementGrid" class="achievement-grid" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-content">
+        <img class="footer-logo" src="/rocckouware-logo.png" alt="Rocckouware — software com atitude" />
+        <p>
+          MathPlay Solutions
+          <span>Uma plataforma educacional desenvolvida por <strong>Rocckouware</strong>.</span>
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

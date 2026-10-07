@@ -82,6 +82,113 @@ const gameAwards = {
   potencia: { badge: 'Mestre das Potências', description: 'Resolveu desafios de potenciação e radiciação.' }
 };
 
+const achievementCatalog = [
+  ...Object.entries(gameAwards).flatMap(([game, award]) => [
+    {
+      badge: `${award.badge} - Primeira Partida`,
+      description: `Completou sua primeira partida de ${award.badge}.`,
+      requirement: 'Complete uma partida deste jogo em qualquer dificuldade.',
+      category: 'Por jogo',
+      icon: '♪'
+    },
+    {
+      badge: award.badge,
+      description: award.description,
+      requirement: 'Alcance pelo menos 80% neste jogo.',
+      category: 'Por jogo',
+      icon: '★'
+    },
+    {
+      badge: `${award.badge} + 3 Partidas`,
+      description: 'Completou três ou mais partidas neste tema.',
+      requirement: 'Jogue este tema pelo menos três vezes.',
+      category: 'Por jogo',
+      icon: '♛'
+    },
+    ...['Fácil', 'Difícil'].map((difficulty) => ({
+      badge: `${award.badge} - Modo ${difficulty}`,
+      description: `Demonstrou domínio de ${award.badge} no modo ${difficulty.toLowerCase()}.`,
+      requirement: `Consiga pelo menos 80% neste jogo no modo ${difficulty.toLowerCase()}.`,
+      category: 'Dificuldade',
+      icon: difficulty === 'Fácil' ? '♫' : '⚡'
+    }))
+  ]),
+  {
+    badge: 'Primeira Missão',
+    description: 'Concluiu sua primeira partida no MathPlay.',
+    requirement: 'Complete uma partida em qualquer jogo.',
+    category: 'Progresso',
+    icon: '➤'
+  },
+  {
+    badge: 'Resposta Perfeita',
+    description: 'Acertou todas as questões de uma partida.',
+    requirement: 'Consiga 100% em uma partida.',
+    category: 'Desempenho',
+    icon: '✓'
+  },
+  {
+    badge: 'Explorador Completo',
+    description: 'Experimentou pelo menos quatro jogos diferentes.',
+    requirement: 'Jogue quatro jogos diferentes.',
+    category: 'Progresso',
+    icon: '⌖'
+  },
+  {
+    badge: 'Colecionador de Pontos',
+    description: 'Acumulou 500 pontos jogando MathPlay.',
+    requirement: 'Acumule 500 pontos.',
+    category: 'Progresso',
+    icon: '◆'
+  },
+  {
+    badge: 'Maratonista MathPlay',
+    description: 'Completou dez partidas na plataforma.',
+    requirement: 'Complete dez partidas.',
+    category: 'Progresso',
+    icon: '⚡'
+  },
+  {
+    badge: 'Turnê MathPlay',
+    description: 'Completou 25 partidas na plataforma.',
+    requirement: 'Complete 25 partidas.',
+    category: 'Progresso',
+    icon: '♫'
+  },
+  {
+    badge: 'Lenda do Palco',
+    description: 'Completou 50 partidas na plataforma.',
+    requirement: 'Complete 50 partidas.',
+    category: 'Progresso',
+    icon: '♛'
+  },
+  {
+    badge: 'Versatilidade Musical',
+    description: 'Jogou nos níveis fácil, médio e difícil.',
+    requirement: 'Complete pelo menos uma partida em cada nível de dificuldade.',
+    category: 'Dificuldade',
+    icon: '♪'
+  },
+  {
+    badge: 'Coragem no Desafio',
+    description: 'Concluiu uma partida no nível difícil.',
+    requirement: 'Complete uma partida no nível difícil.',
+    category: 'Dificuldade',
+    icon: '▲'
+  },
+  {
+    badge: 'Lenda da Matemática',
+    description: 'Acertou todas as questões em uma partida difícil.',
+    requirement: 'Consiga 100% em uma partida difícil.',
+    category: 'Dificuldade',
+    icon: '✦'
+  }
+];
+
+if (achievementCatalog.length !== 50) {
+  throw new Error(`O catálogo deve conter exatamente 50 conquistas, mas contém ${achievementCatalog.length}.`);
+}
+
 function getSafeUser(user) {
   return {
     id: user.id,
@@ -138,31 +245,67 @@ function getDashboardData(userId) {
   };
 }
 
-function awardAchievements(userId, game, score) {
+function awardAchievements(userId) {
   const awardBadge = (badge, description) => {
     db.prepare('INSERT OR IGNORE INTO achievements (user_id, badge, description) VALUES (?, ?, ?)')
       .run(userId, badge, description);
   };
 
-  const config = gameAwards[game];
-  if (score >= 80) {
-    awardBadge(config.badge, config.description);
-  }
+  const gameProgress = db.prepare(`
+    SELECT
+      game,
+      COUNT(*) AS attempts,
+      MAX(score) AS best_score,
+      MAX(CASE WHEN difficulty = 'facil' THEN score END) AS easy_best_score,
+      MAX(CASE WHEN difficulty = 'dificil' THEN score END) AS hard_best_score
+    FROM game_results
+    WHERE user_id = ?
+    GROUP BY game
+  `).all(userId);
 
-  const recordCount = db
-    .prepare('SELECT COUNT(*) AS total FROM game_results WHERE user_id = ? AND game = ?')
-    .get(userId, game).total;
+  for (const result of gameProgress) {
+    const config = gameAwards[result.game];
+    if (!config) continue;
 
-  if (recordCount >= 3) {
-    const bonusBadge = `${config.badge} + 3 Partidas`;
-    awardBadge(bonusBadge, 'Completou três ou mais partidas neste tema.');
+    if (result.attempts >= 1) {
+      awardBadge(
+        `${config.badge} - Primeira Partida`,
+        `Completou sua primeira partida de ${config.badge}.`
+      );
+    }
+
+    if (result.best_score >= 80) {
+      awardBadge(config.badge, config.description);
+    }
+
+    if (result.attempts >= 3) {
+      awardBadge(`${config.badge} + 3 Partidas`, 'Completou três ou mais partidas neste tema.');
+    }
+
+    if (result.easy_best_score >= 80) {
+      awardBadge(
+        `${config.badge} - Modo Fácil`,
+        `Demonstrou domínio de ${config.badge} no modo fácil.`
+      );
+    }
+
+    if (result.hard_best_score >= 80) {
+      awardBadge(
+        `${config.badge} - Modo Difícil`,
+        `Demonstrou domínio de ${config.badge} no modo difícil.`
+      );
+    }
   }
 
   const progress = db.prepare(`
     SELECT
       COUNT(*) AS total_games,
       COALESCE(SUM(score), 0) AS total_score,
-      COUNT(DISTINCT game) AS different_games
+      COUNT(DISTINCT game) AS different_games,
+      COUNT(DISTINCT difficulty) AS different_difficulties,
+      MAX(CASE WHEN score = 100 THEN 1 ELSE 0 END) AS has_perfect_game,
+      MAX(CASE WHEN difficulty = 'dificil' THEN 1 ELSE 0 END) AS has_hard_game,
+      MAX(CASE WHEN difficulty = 'dificil' AND score = 100 THEN 1 ELSE 0 END) AS has_perfect_hard_game
     FROM game_results
     WHERE user_id = ?
   `).get(userId);
@@ -171,21 +314,15 @@ function awardAchievements(userId, game, score) {
     awardBadge('Primeira Missão', 'Concluiu sua primeira partida no MathPlay.');
   }
 
-  if (score === 100) {
+  if (progress.has_perfect_game) {
     awardBadge('Resposta Perfeita', 'Acertou todas as questões de uma partida.');
   }
 
-  const hardGameCount = db
-    .prepare("SELECT COUNT(*) AS total FROM game_results WHERE user_id = ? AND difficulty = 'dificil'")
-    .get(userId).total;
-  if (hardGameCount >= 1) {
+  if (progress.has_hard_game) {
     awardBadge('Coragem no Desafio', 'Concluiu uma partida no nível difícil.');
   }
 
-  const perfectHardGameCount = db
-    .prepare("SELECT COUNT(*) AS total FROM game_results WHERE user_id = ? AND difficulty = 'dificil' AND score = 100")
-    .get(userId).total;
-  if (perfectHardGameCount >= 1) {
+  if (progress.has_perfect_hard_game) {
     awardBadge('Lenda da Matemática', 'Acertou todas as questões em uma partida difícil.');
   }
 
@@ -199,6 +336,18 @@ function awardAchievements(userId, game, score) {
 
   if (progress.total_games >= 10) {
     awardBadge('Maratonista MathPlay', 'Completou dez partidas na plataforma.');
+  }
+
+  if (progress.total_games >= 25) {
+    awardBadge('Turnê MathPlay', 'Completou 25 partidas na plataforma.');
+  }
+
+  if (progress.total_games >= 50) {
+    awardBadge('Lenda do Palco', 'Completou 50 partidas na plataforma.');
+  }
+
+  if (progress.different_difficulties === 3) {
+    awardBadge('Versatilidade Musical', 'Jogou nos níveis fácil, médio e difícil.');
   }
 }
 
@@ -279,6 +428,28 @@ app.get('/api/dashboard', requireAuth, (req, res) => {
   res.json(data);
 });
 
+app.get('/api/achievements', requireAuth, (req, res) => {
+  awardAchievements(req.session.userId);
+
+  const unlockedAchievements = new Map(
+    db.prepare('SELECT badge, created_at FROM achievements WHERE user_id = ?')
+      .all(req.session.userId)
+      .map((achievement) => [achievement.badge, achievement.created_at])
+  );
+
+  const achievements = achievementCatalog.map((achievement) => ({
+    ...achievement,
+    unlocked: unlockedAchievements.has(achievement.badge),
+    unlockedAt: unlockedAchievements.get(achievement.badge) || null
+  }));
+
+  res.json({
+    total: achievements.length,
+    unlocked: achievements.filter((achievement) => achievement.unlocked).length,
+    achievements
+  });
+});
+
 app.post('/api/game-result', requireAuth, (req, res) => {
   const { game, difficulty, score, correctAnswers, totalQuestions } = req.body;
 
@@ -304,7 +475,7 @@ app.post('/api/game-result', requireAuth, (req, res) => {
     'INSERT INTO game_results (user_id, game, difficulty, score, correct_answers, total_questions) VALUES (?, ?, ?, ?, ?, ?)'
   ).run(req.session.userId, game, difficulty, score, correctAnswers, totalQuestions);
 
-  awardAchievements(req.session.userId, game, score);
+  awardAchievements(req.session.userId);
 
   const dashboard = getDashboardData(req.session.userId);
 
@@ -317,6 +488,10 @@ app.post('/api/game-result', requireAuth, (req, res) => {
 
 app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.get('/conquistas', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'achievements.html'));
 });
 
 app.get('*', (req, res) => {

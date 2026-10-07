@@ -6,7 +6,9 @@ Portal educacional gamificado desenvolvido a partir do desafio do PDF do TCC SES
 
 - Cadastro e login de usuários com persistência em sessão
 - Página dedicada de login e cadastro em `/login`
+- Página de conquistas do usuário em `/conquistas`
 - Identidade visual da empresa Rocckouware e logo fornecida
+- Tema rock and roll em todas as páginas e componentes, com visual escuro, neon roxo e efeitos de palco
 - Dashboard com estatísticas, conquistas e histórico de partidas
 - Banco de dados SQLite com persistência de resultados
 - 8 jogos matemáticos funcionais:
@@ -18,7 +20,7 @@ Portal educacional gamificado desenvolvido a partir do desafio do PDF do TCC SES
   - Detetives dos Dados
   - Missão no Plano
   - Batalha das Potências
-- 23 conquistas por tema, desempenho, dificuldade e progresso
+- 50 conquistas por jogo, desempenho, dificuldade e progresso
 - Três níveis de dificuldade com conjuntos de questões próprios em cada jogo
 - Interface responsiva e acessível para mobile, tablet e desktop
 
