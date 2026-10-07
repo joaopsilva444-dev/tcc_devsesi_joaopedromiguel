@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="MathPlay Solutions é uma plataforma educacional gamificada para aprendizagem de matemática do Ensino Fundamental II."
+    />
+    <title>MathPlay Solutions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container nav-wrap">
+        <div class="brand" aria-label="MathPlay Solutions por Rocckouware">
+          <img class="brand-logo" src="/rocckouware-logo.png" alt="Logo da Rocckouware" />
+          <span class="brand-copy">
+            <strong>MathPlay Solutions</strong>
+            <span>por Rocckouware</span>
+          </span>
+        </div>
+        <nav class="nav" aria-label="Navegação principal">
+          <a href="#home">Início</a>
+          <a href="#games">Jogos</a>
+          <a href="#dashboard">Painel</a>
+        </nav>
+        <button id="authButton" class="primary-button" onclick="window.location.href='/login'">Entrar</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <section id="home" class="hero">
+        <div class="hero-copy">
+          <span class="eyebrow">Educação + Gamificação</span>
+          <h1>Aprender matemática nunca foi tão divertido.</h1>
+          <p>
+            Uma plataforma interativa que transforma desafios matemáticos em missões,
+            recompensas e progresso contínuo para alunos do Ensino Fundamental II.
+          </p>
+          <div class="cta-group">
+            <button id="exploreGames" class="primary-button">Explorar Jogos</button>
+            <button id="dashboardButton" class="secondary-button">Ver Painel</button>
+          </div>
+        </div>
+
+        <div class="hero-panel" aria-label="Resumo da plataforma">
+          <div class="mini-card">
+            <strong>8</strong>
+            <span>Jogos disponíveis</span>
+          </div>
+          <div class="mini-card">
+            <strong>+90%</strong>
+            <span>Engajamento</span>
+          </div>
+          <div class="mini-card">
+            <strong>23</strong>
+            <span>Conquistas para desbloquear</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="games" class="section-block">
+        <div class="section-heading">
+          <p class="eyebrow">Catálogo</p>
+          <h2>Jogos matemáticos em trilha de aprendizado</h2>
+        </div>
+
+        <div class="game-grid">
+          <article class="game-card" data-game="inteiros">
+            <span class="game-tag">Inteiros</span>
+            <h3>Batalha dos Inteiros</h3>
+            <p>Resolva operações com números positivos e negativos e avance na missão.</p>
+            <button class="play-button">Jogar</button>
+          </article>
+
+          <article class="game-card" data-game="fracoes">
+            <span class="game-tag">Frações</span>
+            <h3>Poções de Frações</h3>
+            <p>Combine ingredientes e descubra proporções perfeitas para avançar.</p>
+            <button class="play-button">Jogar</button>
+          </article>
+
+          <article class="game-card" data-game="equacoes">
+            <span class="game-tag">Álgebra</span>
+            <h3>Balança do Equilíbrio</h3>
+            <p>Encontre o valor da incógnita e equilibre cada etapa dos desafios.</p>
+            <button class="play-button">Jogar</button>
+          </article>
+
+          <article class="game-card" data-game="geometria">
+            <span class="game-tag">Geometria</span>
+            <h3>Construtor de Cidades</h3>
+            <p>Calcule áreas e perímetros para terminar a reforma e conquistar medalhas.</p>
+            <button class="play-button">Jogar</button>
+          </article>
+
+          <article class="game-card" data-game="financeiro">
+            <span class="game-tag">Educação financeira</span>
+            <h3>Desafio da Loja</h3>
+            <p>Calcule descontos, porcentagens e trocos para ajudar sua loja a crescer.</p>
+            <button class="play-button">Jogar</button>
+          </article>
+
+          <article class="game-card" data-game="estatistica">
+            <span class="game-tag">Estatística</span>
+            <h3>Detetives dos Dados</h3>
+            <p>Investigue pistas resolvendo médias, medianas e modas de cada caso.</p>
+            <button class="play-button">Jogar</button>
+          </article>
+
+          <article class="game-card" data-game="coordenadas">
+            <span class="game-tag">Plano cartesiano</span>
+            <h3>Missão no Plano</h3>
+            <p>Encontre tesouros e trace rotas usando coordenadas no mapa.</p>
+            <button class="play-button">Jogar</button>
+          </article>
+
+          <article class="game-card" data-game="potencia">
+            <span class="game-tag">Potências e raízes</span>
+            <h3>Batalha das Potências</h3>
+            <p>Use potências e raízes para superar desafios e vencer a batalha.</p>
+            <button class="play-button">Jogar</button>
+          </article>
+        </div>
+      </section>
+
+      <section id="dashboard" class="section-block dashboard-panel hidden">
+        <div class="section-heading">
+          <p class="eyebrow">Perfil do aluno</p>
+          <h2>Painel de evolução</h2>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span>Total de partidas</span>
+            <strong id="totalGames">0</strong>
+          </div>
+          <div class="stat-card">
+            <span>Pontuação acumulada</span>
+            <strong id="totalScore">0</strong>
+          </div>
+          <div class="stat-card">
+            <span>Média geral</span>
+            <strong id="avgScore">0%</strong>
+          </div>
+        </div>
+
+        <div class="dashboard-layout">
+          <div class="panel-card">
+            <h3>Conquistas</h3>
+            <ul id="achievementList" class="item-list"></ul>
+          </div>
+          <div class="panel-card">
+            <h3>Histórico recente</h3>
+            <ul id="historyList" class="item-list"></ul>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-content">
+        <img class="footer-logo" src="/rocckouware-logo.png" alt="Rocckouware — software com atitude" />
+        <p>
+          MathPlay Solutions
+          <span>Uma plataforma educacional desenvolvida por <strong>Rocckouware</strong>.</span>
+        </p>
+      </div>
+    </footer>
+
+    <div id="authModal" class="modal hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="auth-header">
+          <h2>Bem-vindo ao MathPlay</h2>
+          <button id="closeAuth" class="close-button" aria-label="Fechar modal">×</button>
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="Autenticação">
+          <button class="tab active" data-tab="login" type="button">Login</button>
+          <button class="tab" data-tab="register" type="button">Cadastro</button>
+        </div>
+
+        <form id="loginForm" class="auth-form">
+          <label>
+            E-mail
+            <input type="email" id="loginEmail" placeholder="aluno@mathplay.com" required />
+          </label>
+          <label>
+            Senha
+            <input type="password" id="loginPassword" placeholder="Sua senha" required />
+          </label>
+          <button type="submit" class="primary-button full-width">Entrar</button>
+        </form>
+
+        <form id="registerForm" class="auth-form hidden">
+          <label>
+            Nome de usuário
+            <input type="text" id="registerUsername" placeholder="Digite seu nome" required />
+          </label>
+          <label>
+            E-mail
+            <input type="email" id="registerEmail" placeholder="voce@email.com" required />
+          </label>
+          <label>
+            Senha
+            <input type="password" id="registerPassword" placeholder="Crie uma senha" required />
+          </label>
+          <label>
+            Tipo de usuário
+            <select id="registerRole">
+              <option value="Aluno">Aluno</option>
+              <option value="Professor">Professor</option>
+              <option value="Admin">Admin</option>
+            </select>
+          </label>
+          <button type="submit" class="primary-button full-width">Criar conta</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="gameModal" class="modal hidden" aria-hidden="true">
+      <div class="modal-card game-card-modal">
+        <div class="auth-header">
+          <h2 id="gameModalTitle">Jogo</h2>
+          <button id="closeGameModal" class="close-button" aria-label="Fechar jogo">×</button>
+        </div>
+        <div id="gameArea"></div>
+      </div>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

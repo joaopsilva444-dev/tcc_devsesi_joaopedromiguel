@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Entre ou crie sua conta MathPlay para continuar aprendendo matemática." />
+    <title>Entrar | MathPlay Solutions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/login.js" defer></script>
+  </head>
+  <body>
+    <main class="login-page">
+      <section class="login-intro">
+        <a class="login-brand" href="/" aria-label="MathPlay Solutions por Rocckouware; voltar ao início">
+          <img class="brand-logo" src="/rocckouware-logo.png" alt="Logo da Rocckouware" />
+          <span class="brand-copy">
+            <strong>MathPlay Solutions</strong>
+            <span>por Rocckouware</span>
+          </span>
+        </a>
+        <p class="eyebrow">Sua próxima missão começa aqui</p>
+        <h1>Matemática com diversão e descobertas.</h1>
+        <p>
+          Entre para continuar sua trilha, guardar seu progresso e desbloquear novas
+          conquistas nos jogos MathPlay.
+        </p>
+      </section>
+
+      <section class="login-card" aria-labelledby="formTitle">
+        <h2 id="formTitle">Que bom ter você de volta!</h2>
+        <p id="formDescription">Entre com seus dados para acessar sua conta.</p>
+
+        <form id="loginPageForm" class="login-form">
+          <label for="loginEmail">
+            E-mail
+            <input
+              id="loginEmail"
+              name="email"
+              type="email"
+              autocomplete="email"
+              placeholder="voce@email.com"
+              required
+            />
+          </label>
+          <label for="loginPassword">
+            Senha
+            <input
+              id="loginPassword"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              placeholder="Sua senha"
+              required
+            />
+          </label>
+          <button type="submit" class="primary-button full-width">Entrar</button>
+        </form>
+
+        <form id="registerPageForm" class="login-form" hidden>
+          <label for="registerUsername">
+            Nome de usuário
+            <input
+              id="registerUsername"
+              name="username"
+              type="text"
+              autocomplete="name"
+              placeholder="Como podemos chamar você?"
+              required
+            />
+          </label>
+          <label for="registerEmail">
+            E-mail
+            <input
+              id="registerEmail"
+              name="email"
+              type="email"
+              autocomplete="email"
+              placeholder="voce@email.com"
+              required
+            />
+          </label>
+          <label for="registerPassword">
+            Senha
+            <input
+              id="registerPassword"
+              name="password"
+              type="password"
+              autocomplete="new-password"
+              minlength="6"
+              placeholder="Crie uma senha com pelo menos 6 caracteres"
+              required
+            />
+          </label>
+          <button type="submit" class="primary-button full-width">Criar minha conta</button>
+        </form>
+
+        <p id="formMessage" class="login-message" role="status" aria-live="polite"></p>
+        <p class="login-links">
+          <span id="switchPrompt">Ainda não tem uma conta?</span>
+          <button id="switchForm" class="text-button" type="button">Cadastre-se</button>
+        </p>
+        <a class="back-link" href="/">← Voltar para a página inicial</a>
+      </section>
+    </main>
+  </body>
+</html>
