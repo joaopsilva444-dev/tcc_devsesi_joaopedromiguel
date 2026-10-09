@@ -180,15 +180,12 @@ async function handleRegister(event) {
   const role = document.getElementById('registerRole').value;
 
   try {
-    const response = await apiFetch('/api/register', {
+    await apiFetch('/api/register', {
       method: 'POST',
       body: JSON.stringify({ username, email, password, role })
     });
 
-    state.user = response.user;
-    closeAuthModal();
-    renderUserState();
-    await loadDashboard();
+    window.location.href = '/login?registered=1';
   } catch (error) {
     alert(error.message);
   }

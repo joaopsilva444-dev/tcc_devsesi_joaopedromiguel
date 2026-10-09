@@ -9,6 +9,8 @@ const message = document.getElementById('profileMessage');
 const removePictureButton = document.getElementById('removeProfilePicture');
 const removeBannerButton = document.getElementById('removeProfileBanner');
 const saveButton = document.getElementById('saveProfileButton');
+const deleteAccountButton = document.getElementById('deleteAccountButton');
+const deleteAccountMessage = document.getElementById('deleteAccountMessage');
 const overviewTab = document.getElementById('profileOverviewTab');
 const editTab = document.getElementById('profileEditTab');
 const overview = document.getElementById('profileOverview');
@@ -305,6 +307,24 @@ async function loadProfile() {
 
 overviewTab.addEventListener('click', () => setProfileTab('overview'));
 editTab.addEventListener('click', () => setProfileTab('edit'));
+deleteAccountButton.addEventListener('click', async () => {
+  const confirmed = window.confirm(
+    'Tem certeza que deseja excluir sua conta? Seu perfil, pontos, partidas e conquistas serão apagados permanentemente.'
+  );
+  if (!confirmed) return;
+
+  deleteAccountButton.disabled = true;
+  deleteAccountMessage.textContent = 'Excluindo sua conta...';
+  deleteAccountMessage.className = 'profile-message';
+  try {
+    await fetchJson('/api/account', { method: 'DELETE' });
+    window.location.replace('/login?accountDeleted=1');
+  } catch (error) {
+    deleteAccountMessage.textContent = error.message;
+    deleteAccountMessage.className = 'profile-message error';
+    deleteAccountButton.disabled = false;
+  }
+});
 document.getElementById('editProfileShortcut').addEventListener('click', () => {
   setProfileTab('edit');
   displayNameInput.focus();

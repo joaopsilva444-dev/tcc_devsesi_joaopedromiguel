@@ -357,7 +357,6 @@ app.post('/api/register', asyncRoute(async (req, res) => {
       [username.trim(), email.trim(), passwordHash, safeRole]
     );
 
-    req.session.userId = result.insertId;
     const user = await getRow('SELECT * FROM users WHERE id = ?', [result.insertId]);
 
     res.status(201).json({
@@ -466,6 +465,36 @@ app.put('/api/profile', requireAuth, asyncRoute(async (req, res) => {
   }
 
   res.json({ message: 'Perfil atualizado com sucesso.', user: getSafeUser(user) });
+}));
+
+app.delete('/api/account', requireAuth, asyncRoute(async (req, res) => {
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    await connection.execute('DELETE FROM achievements WHERE user_id = ?', [req.session.userId]);
+    await connection.execute('DELETE FROM game_results WHERE user_id = ?', [req.session.userId]);
+    const [result] = await connection.execute('DELETE FROM users WHERE id = ?', [req.session.userId]);
+
+    if (result.affectedRows !== 1) {
+      await connection.rollback();
+      return res.status(404).json({ error: 'Conta não encontrada.' });
+    }
+
+    await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+
+  req.session.destroy((error) => {
+    if (error) {
+      console.error('Conta excluída, mas não foi possível encerrar a sessão:', error);
+      return res.status(500).json({ error: 'A conta foi excluída, mas não foi possível encerrar a sessão.' });
+    }
+    res.json({ message: 'Conta excluída com sucesso.' });
+  });
 }));
 
 app.post('/api/logout', (req, res) => {

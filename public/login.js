@@ -89,7 +89,7 @@ registerForm.addEventListener('submit', async (event) => {
       password: formData.get('password'),
       role: 'Aluno'
     });
-    window.location.replace('/');
+    window.location.replace('/login?registered=1');
   } catch (error) {
     showMessage(error.message);
   } finally {
@@ -99,4 +99,11 @@ registerForm.addEventListener('submit', async (event) => {
 
 switchForm.addEventListener('click', () => setFormMode(!showingLogin));
 setFormMode(true);
+if (new URLSearchParams(window.location.search).get('registered') === '1') {
+  showMessage('Cadastro realizado com sucesso! Entre com seu e-mail e sua senha.', true);
+  document.getElementById('loginEmail').focus();
+}
+if (new URLSearchParams(window.location.search).get('accountDeleted') === '1') {
+  showMessage('Sua conta e os dados associados foram excluídos com sucesso.', true);
+}
 redirectIfAuthenticated();

@@ -7,6 +7,7 @@ Portal educacional gamificado desenvolvido a partir do desafio do PDF do TCC SES
 - Cadastro e login de usuários com persistência em sessão
 - Página de perfil com nome, foto, banner, pontos, atividade e mural de conquistas recentes
 - Edição de nome, foto e banner em aba separada do perfil, com saudação personalizada na página inicial
+- Exclusão permanente da conta pelo perfil, com confirmação e remoção dos dados associados
 - Página dedicada de login e cadastro em `/login`
 - Página de perfil e edição em abas separadas em `/perfil`
 - Página de conquistas do usuário em `/conquistas`
