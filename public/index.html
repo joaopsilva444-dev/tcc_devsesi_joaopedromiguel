@@ -17,8 +17,10 @@
     />
     <script src="/theme.js"></script>
     <link rel="stylesheet" href="/styles.css" />
+    <script src="/accessibility.js" defer></script>
   </head>
   <body>
+    <a class="skip-link" href="#main-content">Pular para o conteúdo principal</a>
     <header class="topbar">
       <div class="container nav-wrap">
         <div class="brand" aria-label="MathPlay Solutions por Rocckouware">
@@ -44,7 +46,7 @@
       </div>
     </header>
 
-    <main class="container">
+    <main id="main-content" class="container" tabindex="-1">
       <section id="home" class="hero">
         <div class="hero-copy">
           <span class="eyebrow">Aprenda matemática jogando!</span>
@@ -86,56 +88,56 @@
             <span class="game-tag">Inteiros</span>
             <h3>Batalha dos Inteiros</h3>
             <p>Resolva operações com números positivos e negativos e avance na missão.</p>
-            <button class="play-button">Jogar</button>
+            <button class="play-button" aria-label="Jogar Batalha dos Inteiros">Jogar</button>
           </article>
 
           <article class="game-card" data-game="fracoes">
             <span class="game-tag">Frações</span>
             <h3>Poções de Frações</h3>
             <p>Combine ingredientes e descubra proporções perfeitas para avançar.</p>
-            <button class="play-button">Jogar</button>
+            <button class="play-button" aria-label="Jogar Poções de Frações">Jogar</button>
           </article>
 
           <article class="game-card" data-game="equacoes">
             <span class="game-tag">Álgebra</span>
             <h3>Balança do Equilíbrio</h3>
             <p>Encontre o valor da incógnita e equilibre cada etapa dos desafios.</p>
-            <button class="play-button">Jogar</button>
+            <button class="play-button" aria-label="Jogar Balança do Equilíbrio">Jogar</button>
           </article>
 
           <article class="game-card" data-game="geometria">
             <span class="game-tag">Geometria</span>
             <h3>Construtor de Cidades</h3>
             <p>Calcule áreas e perímetros para terminar a reforma e conquistar medalhas.</p>
-            <button class="play-button">Jogar</button>
+            <button class="play-button" aria-label="Jogar Construtor de Cidades">Jogar</button>
           </article>
 
           <article class="game-card" data-game="financeiro">
             <span class="game-tag">Educação financeira</span>
             <h3>Desafio da Loja</h3>
             <p>Calcule descontos, porcentagens e trocos para ajudar sua loja a crescer.</p>
-            <button class="play-button">Jogar</button>
+            <button class="play-button" aria-label="Jogar Desafio da Loja">Jogar</button>
           </article>
 
           <article class="game-card" data-game="estatistica">
             <span class="game-tag">Estatística</span>
             <h3>Detetives dos Dados</h3>
             <p>Investigue pistas resolvendo médias, medianas e modas de cada caso.</p>
-            <button class="play-button">Jogar</button>
+            <button class="play-button" aria-label="Jogar Detetives dos Dados">Jogar</button>
           </article>
 
           <article class="game-card" data-game="coordenadas">
             <span class="game-tag">Plano cartesiano</span>
             <h3>Missão no Plano</h3>
             <p>Encontre tesouros e trace rotas usando coordenadas no mapa.</p>
-            <button class="play-button">Jogar</button>
+            <button class="play-button" aria-label="Jogar Missão no Plano">Jogar</button>
           </article>
 
           <article class="game-card" data-game="potencia">
             <span class="game-tag">Potências e raízes</span>
             <h3>Batalha das Potências</h3>
             <p>Use potências e raízes para superar desafios e vencer a batalha.</p>
-            <button class="play-button">Jogar</button>
+            <button class="play-button" aria-label="Jogar Batalha das Potências">Jogar</button>
           </article>
         </div>
       </section>
@@ -185,19 +187,19 @@
       </div>
     </footer>
 
-    <div id="authModal" class="modal hidden" aria-hidden="true">
+    <div id="authModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="authModalTitle" aria-hidden="true">
       <div class="modal-card">
         <div class="auth-header">
-          <h2>Bem-vindo ao MathPlay</h2>
+          <h2 id="authModalTitle">Bem-vindo ao MathPlay</h2>
           <button id="closeAuth" class="close-button" aria-label="Fechar modal">×</button>
         </div>
 
         <div class="tabs" role="tablist" aria-label="Autenticação">
-          <button class="tab active" data-tab="login" type="button">Login</button>
-          <button class="tab" data-tab="register" type="button">Cadastro</button>
+          <button id="authLoginTab" class="tab active" data-tab="login" type="button" role="tab" aria-selected="true" aria-controls="loginForm">Login</button>
+          <button id="authRegisterTab" class="tab" data-tab="register" type="button" role="tab" aria-selected="false" aria-controls="registerForm">Cadastro</button>
         </div>
 
-        <form id="loginForm" class="auth-form">
+        <form id="loginForm" class="auth-form" role="tabpanel" aria-labelledby="authLoginTab">
           <label>
             E-mail
             <input type="email" id="loginEmail" placeholder="aluno@mathplay.com" required />
@@ -209,7 +211,7 @@
           <button type="submit" class="primary-button full-width">Entrar</button>
         </form>
 
-        <form id="registerForm" class="auth-form hidden">
+        <form id="registerForm" class="auth-form hidden" role="tabpanel" aria-labelledby="authRegisterTab" hidden>
           <label>
             Nome de usuário
             <input type="text" id="registerUsername" placeholder="Digite seu nome" required />
@@ -235,7 +237,7 @@
       </div>
     </div>
 
-    <div id="gameModal" class="modal hidden" aria-hidden="true">
+    <div id="gameModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="gameModalTitle" aria-hidden="true">
       <div class="modal-card game-card-modal">
         <div class="auth-header">
           <h2 id="gameModalTitle">Jogo</h2>
@@ -246,5 +248,13 @@
     </div>
 
     <script src="/app.js"></script>
+    <div vw class="enabled">
+      <div vw-access-button class="active"></div>
+      <div vw-plugin-wrapper>
+        <div class="vw-plugin-top-wrapper"></div>
+      </div>
+    </div>
+    <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+    <script>new window.VLibras.Widget('https://vlibras.gov.br/app');</script>
   </body>
 </html>

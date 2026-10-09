@@ -11,6 +11,8 @@ Portal educacional gamificado desenvolvido a partir do desafio do PDF do TCC SES
 - Página dedicada de login e cadastro em `/login`
 - Página de perfil e edição em abas separadas em `/perfil`
 - Página de conquistas do usuário em `/conquistas`
+- Compatibilidade com leitores de tela, incluindo TalkBack, atalhos para pular ao conteúdo, foco visível e leitura em voz alta em português
+- Widget VLibras para tradução de conteúdo em português para Libras nas páginas principais
 - Identidade visual da empresa Rocckouware e logo fornecida
 - Tema rock and roll em todas as páginas e componentes, com visual escuro, neon roxo e efeitos de palco
 - Dashboard com estatísticas, conquistas e histórico de partidas

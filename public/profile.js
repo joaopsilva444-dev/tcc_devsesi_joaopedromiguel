@@ -307,6 +307,20 @@ async function loadProfile() {
 
 overviewTab.addEventListener('click', () => setProfileTab('overview'));
 editTab.addEventListener('click', () => setProfileTab('edit'));
+[overviewTab, editTab].forEach((tab, index, tabs) => {
+  tab.addEventListener('keydown', (event) => {
+    let nextIndex = index;
+    if (event.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length;
+    else if (event.key === 'ArrowLeft') nextIndex = (index - 1 + tabs.length) % tabs.length;
+    else if (event.key === 'Home') nextIndex = 0;
+    else if (event.key === 'End') nextIndex = tabs.length - 1;
+    else return;
+
+    event.preventDefault();
+    tabs[nextIndex].click();
+    tabs[nextIndex].focus();
+  });
+});
 deleteAccountButton.addEventListener('click', async () => {
   const confirmed = window.confirm(
     'Tem certeza que deseja excluir sua conta? Seu perfil, pontos, partidas e conquistas serão apagados permanentemente.'

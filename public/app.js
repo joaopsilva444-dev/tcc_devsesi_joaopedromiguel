@@ -19,36 +19,50 @@ const tabButtons = document.querySelectorAll('.tab');
 const dashboardPanel = document.getElementById('dashboard');
 const gameArea = document.getElementById('gameArea');
 const gameModalTitle = document.getElementById('gameModalTitle');
+let lastDialogTrigger = null;
+let activeDialog = null;
 
 function setAuthTab(tab) {
   state.currentTab = tab;
   tabButtons.forEach((button) => {
     button.classList.toggle('active', button.dataset.tab === tab);
+    button.setAttribute('aria-selected', String(button.dataset.tab === tab));
   });
 
   if (tab === 'login') {
     loginForm.classList.remove('hidden');
+    loginForm.hidden = false;
     registerForm.classList.add('hidden');
+    registerForm.hidden = true;
   } else {
     loginForm.classList.add('hidden');
+    loginForm.hidden = true;
     registerForm.classList.remove('hidden');
+    registerForm.hidden = false;
   }
 }
 
 function openAuthModal() {
+  lastDialogTrigger = document.activeElement;
+  activeDialog = authModal;
   authModal.classList.remove('hidden');
   authModal.setAttribute('aria-hidden', 'false');
+  document.getElementById('closeAuth').focus();
 }
 
 function closeAuthModal() {
   authModal.classList.add('hidden');
   authModal.setAttribute('aria-hidden', 'true');
+  restoreDialogFocus(authModal);
 }
 
 function openGameModal(title) {
+  lastDialogTrigger = document.activeElement;
+  activeDialog = gameModal;
   gameModalTitle.textContent = title;
   gameModal.classList.remove('hidden');
   gameModal.setAttribute('aria-hidden', 'false');
+  document.getElementById('closeGameModal').focus();
 }
 
 function closeGameModal() {
@@ -57,6 +71,45 @@ function closeGameModal() {
   gameArea.innerHTML = '';
   state.activeGame = null;
   state.currentGameData = null;
+  restoreDialogFocus(gameModal);
+}
+
+function restoreDialogFocus(dialog) {
+  if (activeDialog !== dialog) return;
+  activeDialog = null;
+  if (lastDialogTrigger instanceof HTMLElement && lastDialogTrigger.isConnected) {
+    lastDialogTrigger.focus();
+  }
+  lastDialogTrigger = null;
+}
+
+function handleDialogKeydown(event) {
+  if (!activeDialog) return;
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    if (activeDialog === authModal) closeAuthModal();
+    else closeGameModal();
+    return;
+  }
+  if (event.key !== 'Tab') return;
+
+  const focusable = [...activeDialog.querySelectorAll(
+    'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
+  )].filter((element) => !element.hidden && element.getClientRects().length > 0);
+  if (!focusable.length) {
+    event.preventDefault();
+    return;
+  }
+
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
 }
 
 async function apiFetch(url, options = {}) {
@@ -226,11 +279,26 @@ function initAuthEvents() {
 
   tabButtons.forEach((button) => {
     button.addEventListener('click', () => setAuthTab(button.dataset.tab));
+    button.addEventListener('keydown', (event) => {
+      const tabs = [...tabButtons];
+      const currentIndex = tabs.indexOf(button);
+      let nextIndex = currentIndex;
+      if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % tabs.length;
+      else if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+      else if (event.key === 'Home') nextIndex = 0;
+      else if (event.key === 'End') nextIndex = tabs.length - 1;
+      else return;
+
+      event.preventDefault();
+      setAuthTab(tabs[nextIndex].dataset.tab);
+      tabs[nextIndex].focus();
+    });
   });
 
   loginForm.addEventListener('submit', handleLogin);
   registerForm.addEventListener('submit', handleRegister);
   document.getElementById('closeGameModal').addEventListener('click', closeGameModal);
+  document.addEventListener('keydown', handleDialogKeydown);
 }
 
 function gameConfigMap() {
@@ -934,7 +1002,7 @@ function renderDifficultySelection(config) {
   gameArea.innerHTML = `
     <div class="game-screen">
       <div class="question-box difficulty-intro">
-        <h3>Escolha a dificuldade</h3>
+        <h3 tabindex="-1">Escolha a dificuldade</h3>
         <p>Selecione um nível para começar. Cada rodada traz 10 questões aleatórias e diferentes.</p>
         <div class="difficulty-options">
           <button type="button" class="difficulty-option" data-difficulty="facil">
@@ -951,6 +1019,7 @@ function renderDifficultySelection(config) {
     </div>
   `;
 
+  gameArea.querySelector('h3').focus();
   gameArea.querySelectorAll('[data-difficulty]').forEach((button) => {
     button.addEventListener('click', () => startGame(config, button.dataset.difficulty));
   });
@@ -991,7 +1060,7 @@ function renderCurrentQuestion() {
         <span>${{ facil: 'Fácil', medio: 'Médio', dificil: 'Difícil' }[data.difficulty]} • Acertos: ${data.correct}</span>
       </div>
       <div class="question-box">
-        <h3>${question.prompt}</h3>
+        <h3 tabindex="-1">${question.prompt}</h3>
         <form id="answerForm">
           <label>
             Resposta
@@ -1003,10 +1072,11 @@ function renderCurrentQuestion() {
           </div>
         </form>
       </div>
-      <div id="gameFeedback" class="feedback-box hidden"></div>
+      <div id="gameFeedback" class="feedback-box hidden" role="status" aria-live="polite" aria-atomic="true"></div>
     </div>
   `;
 
+  gameArea.querySelector('.question-box h3').focus();
   document.getElementById('answerForm').addEventListener('submit', handleAnswerSubmission);
   document.getElementById('hintButton').addEventListener('click', showHint);
 }
