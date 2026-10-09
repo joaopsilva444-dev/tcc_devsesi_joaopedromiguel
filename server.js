@@ -1,14 +1,28 @@
 const express = require('express');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
-const Database = require('better-sqlite3');
+const mysql = require('mysql2/promise');
+require('dotenv').config();
 const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const db = new Database(path.join(__dirname, 'mathplay.db'));
+const db = mysql.createPool({
+  host: process.env.DB_HOST || '127.0.0.1',
+  port: Number(process.env.DB_PORT || 3306),
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'mathplay',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  timezone: 'Z'
+});
 
-app.use(express.json());
+const MAX_PROFILE_IMAGE_BYTES = 200 * 1024;
+const MAX_PROFILE_BANNER_BYTES = 400 * 1024;
+
+app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(
   session({
@@ -32,43 +46,19 @@ function requireAuth(req, res, next) {
   next();
 }
 
-const schema = `
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT NOT NULL UNIQUE,
-    email TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
-    role TEXT NOT NULL DEFAULT 'Aluno',
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-  );
+async function getRow(sql, values = []) {
+  const [rows] = await db.execute(sql, values);
+  return rows[0];
+}
 
-  CREATE TABLE IF NOT EXISTS game_results (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    game TEXT NOT NULL,
-    score INTEGER NOT NULL,
-    correct_answers INTEGER NOT NULL,
-    total_questions INTEGER NOT NULL,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-  );
+async function getRows(sql, values = []) {
+  const [rows] = await db.execute(sql, values);
+  return rows;
+}
 
-  CREATE TABLE IF NOT EXISTS achievements (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    badge TEXT NOT NULL,
-    description TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(user_id, badge),
-    FOREIGN KEY (user_id) REFERENCES users(id)
-  );
-`;
-
-db.exec(schema);
-
-const gameResultColumns = db.prepare('PRAGMA table_info(game_results)').all();
-if (!gameResultColumns.some((column) => column.name === 'difficulty')) {
-  db.exec("ALTER TABLE game_results ADD COLUMN difficulty TEXT NOT NULL DEFAULT 'medio'");
+async function execute(sql, values = []) {
+  const [result] = await db.execute(sql, values);
+  return result;
 }
 
 const gameAwards = {
@@ -193,44 +183,35 @@ function getSafeUser(user) {
   return {
     id: user.id,
     username: user.username,
+    displayName: user.display_name || user.username,
     email: user.email,
-    role: user.role
+    role: user.role,
+    profilePicture: user.profile_picture || null,
+    profileBanner: user.profile_banner || null
   };
 }
 
-function getDashboardData(userId) {
-  const user = db
-    .prepare('SELECT id, username, email, role FROM users WHERE id = ?')
-    .get(userId);
-
-  const totals = db
-    .prepare(`
+async function getDashboardData(userId) {
+  const [user, totals, bestScores, achievements, recent] = await Promise.all([
+    getRow('SELECT id, username, display_name, profile_picture, profile_banner, email, role FROM users WHERE id = ?', [userId]),
+    getRow(`
       SELECT
         COUNT(*) AS total_games,
         COALESCE(SUM(score), 0) AS total_score,
         COALESCE(AVG(score), 0) AS avg_score
       FROM game_results
       WHERE user_id = ?
-    `)
-    .get(userId);
-
-  const bestScores = db
-    .prepare(`
+    `, [userId]),
+    getRows(`
       SELECT game, MAX(score) AS best_score, COUNT(*) AS attempts
       FROM game_results
       WHERE user_id = ?
       GROUP BY game
       ORDER BY best_score DESC
-    `)
-    .all(userId);
-
-  const achievements = db
-    .prepare('SELECT badge, description, created_at FROM achievements WHERE user_id = ? ORDER BY created_at DESC')
-    .all(userId);
-
-  const recent = db
-    .prepare('SELECT game, difficulty, score, correct_answers, total_questions, created_at FROM game_results WHERE user_id = ? ORDER BY created_at DESC LIMIT 5')
-    .all(userId);
+    `, [userId]),
+    getRows('SELECT badge, description, created_at FROM achievements WHERE user_id = ? ORDER BY created_at DESC', [userId]),
+    getRows('SELECT game, difficulty, score, correct_answers, total_questions, created_at FROM game_results WHERE user_id = ? ORDER BY created_at DESC LIMIT 5', [userId])
+  ]);
 
   return {
     user: getSafeUser(user),
@@ -245,13 +226,13 @@ function getDashboardData(userId) {
   };
 }
 
-function awardAchievements(userId) {
-  const awardBadge = (badge, description) => {
-    db.prepare('INSERT OR IGNORE INTO achievements (user_id, badge, description) VALUES (?, ?, ?)')
-      .run(userId, badge, description);
-  };
+async function awardAchievements(userId) {
+  const awardBadge = (badge, description) => execute(
+    'INSERT IGNORE INTO achievements (user_id, badge, description) VALUES (?, ?, ?)',
+    [userId, badge, description]
+  );
 
-  const gameProgress = db.prepare(`
+  const gameProgress = await getRows(`
     SELECT
       game,
       COUNT(*) AS attempts,
@@ -261,43 +242,43 @@ function awardAchievements(userId) {
     FROM game_results
     WHERE user_id = ?
     GROUP BY game
-  `).all(userId);
+  `, [userId]);
 
   for (const result of gameProgress) {
     const config = gameAwards[result.game];
     if (!config) continue;
 
     if (result.attempts >= 1) {
-      awardBadge(
+      await awardBadge(
         `${config.badge} - Primeira Partida`,
         `Completou sua primeira partida de ${config.badge}.`
       );
     }
 
     if (result.best_score >= 80) {
-      awardBadge(config.badge, config.description);
+      await awardBadge(config.badge, config.description);
     }
 
     if (result.attempts >= 3) {
-      awardBadge(`${config.badge} + 3 Partidas`, 'Completou três ou mais partidas neste tema.');
+      await awardBadge(`${config.badge} + 3 Partidas`, 'Completou três ou mais partidas neste tema.');
     }
 
     if (result.easy_best_score >= 80) {
-      awardBadge(
+      await awardBadge(
         `${config.badge} - Modo Fácil`,
         `Demonstrou domínio de ${config.badge} no modo fácil.`
       );
     }
 
     if (result.hard_best_score >= 80) {
-      awardBadge(
+      await awardBadge(
         `${config.badge} - Modo Difícil`,
         `Demonstrou domínio de ${config.badge} no modo difícil.`
       );
     }
   }
 
-  const progress = db.prepare(`
+  const progress = await getRow(`
     SELECT
       COUNT(*) AS total_games,
       COALESCE(SUM(score), 0) AS total_score,
@@ -308,54 +289,59 @@ function awardAchievements(userId) {
       MAX(CASE WHEN difficulty = 'dificil' AND score = 100 THEN 1 ELSE 0 END) AS has_perfect_hard_game
     FROM game_results
     WHERE user_id = ?
-  `).get(userId);
+  `, [userId]);
 
   if (progress.total_games >= 1) {
-    awardBadge('Primeira Missão', 'Concluiu sua primeira partida no MathPlay.');
+    await awardBadge('Primeira Missão', 'Concluiu sua primeira partida no MathPlay.');
   }
 
   if (progress.has_perfect_game) {
-    awardBadge('Resposta Perfeita', 'Acertou todas as questões de uma partida.');
+    await awardBadge('Resposta Perfeita', 'Acertou todas as questões de uma partida.');
   }
 
   if (progress.has_hard_game) {
-    awardBadge('Coragem no Desafio', 'Concluiu uma partida no nível difícil.');
+    await awardBadge('Coragem no Desafio', 'Concluiu uma partida no nível difícil.');
   }
 
   if (progress.has_perfect_hard_game) {
-    awardBadge('Lenda da Matemática', 'Acertou todas as questões em uma partida difícil.');
+    await awardBadge('Lenda da Matemática', 'Acertou todas as questões em uma partida difícil.');
   }
 
   if (progress.different_games >= 4) {
-    awardBadge('Explorador Completo', 'Experimentou pelo menos quatro jogos diferentes.');
+    await awardBadge('Explorador Completo', 'Experimentou pelo menos quatro jogos diferentes.');
   }
 
   if (progress.total_score >= 500) {
-    awardBadge('Colecionador de Pontos', 'Acumulou 500 pontos jogando MathPlay.');
+    await awardBadge('Colecionador de Pontos', 'Acumulou 500 pontos jogando MathPlay.');
   }
 
   if (progress.total_games >= 10) {
-    awardBadge('Maratonista MathPlay', 'Completou dez partidas na plataforma.');
+    await awardBadge('Maratonista MathPlay', 'Completou dez partidas na plataforma.');
   }
 
   if (progress.total_games >= 25) {
-    awardBadge('Turnê MathPlay', 'Completou 25 partidas na plataforma.');
+    await awardBadge('Turnê MathPlay', 'Completou 25 partidas na plataforma.');
   }
 
   if (progress.total_games >= 50) {
-    awardBadge('Lenda do Palco', 'Completou 50 partidas na plataforma.');
+    await awardBadge('Lenda do Palco', 'Completou 50 partidas na plataforma.');
   }
 
   if (progress.different_difficulties === 3) {
-    awardBadge('Versatilidade Musical', 'Jogou nos níveis fácil, médio e difícil.');
+    await awardBadge('Versatilidade Musical', 'Jogou nos níveis fácil, médio e difícil.');
   }
 }
 
-app.get('/api/health', (req, res) => {
-  res.json({ ok: true, message: 'MathPlay Solutions online.' });
-});
+function asyncRoute(handler) {
+  return (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
+}
 
-app.post('/api/register', (req, res) => {
+app.get('/api/health', asyncRoute(async (req, res) => {
+  await db.query('SELECT 1');
+  res.json({ ok: true, message: 'MathPlay Solutions online.' });
+}));
+
+app.post('/api/register', asyncRoute(async (req, res) => {
   const { username, email, password, role } = req.body;
 
   if (!username || !email || !password) {
@@ -366,33 +352,35 @@ app.post('/api/register', (req, res) => {
   const passwordHash = bcrypt.hashSync(password, 10);
 
   try {
-    const result = db.prepare(
-      'INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, ?)'
-    ).run(username.trim(), email.trim(), passwordHash, safeRole);
+    const result = await execute(
+      'INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, ?)',
+      [username.trim(), email.trim(), passwordHash, safeRole]
+    );
 
-    req.session.userId = result.lastInsertRowid;
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
+    req.session.userId = result.insertId;
+    const user = await getRow('SELECT * FROM users WHERE id = ?', [result.insertId]);
 
     res.status(201).json({
       message: 'Cadastro realizado com sucesso.',
       user: getSafeUser(user)
     });
   } catch (error) {
-    if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+    if (error.code === 'ER_DUP_ENTRY') {
       return res.status(409).json({ error: 'Usuário ou e-mail já cadastrados.' });
     }
+    console.error('Erro ao criar usuário:', error);
     return res.status(500).json({ error: 'Erro ao criar usuário.' });
   }
-});
+}));
 
-app.post('/api/login', (req, res) => {
+app.post('/api/login', asyncRoute(async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({ error: 'Informe e-mail e senha.' });
   }
 
-  const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email.trim());
+  const user = await getRow('SELECT * FROM users WHERE email = ?', [email.trim()]);
 
   if (!user) {
     return res.status(401).json({ error: 'Credenciais inválidas.' });
@@ -406,16 +394,79 @@ app.post('/api/login', (req, res) => {
 
   req.session.userId = user.id;
   res.json({ message: 'Login realizado com sucesso.', user: getSafeUser(user) });
-});
+}));
 
-app.get('/api/session', (req, res) => {
+app.get('/api/session', asyncRoute(async (req, res) => {
   if (!req.session.userId) {
     return res.json({ user: null });
   }
 
-  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.session.userId);
+  const user = await getRow('SELECT * FROM users WHERE id = ?', [req.session.userId]);
   return res.json({ user: user ? getSafeUser(user) : null });
-});
+}));
+
+app.put('/api/profile', requireAuth, asyncRoute(async (req, res) => {
+  const { displayName, profilePicture, profileBanner } = req.body;
+  if (typeof displayName !== 'string') {
+    return res.status(400).json({ error: 'Informe um nome de perfil.' });
+  }
+
+  const normalizedName = displayName.trim();
+  if (!normalizedName || Array.from(normalizedName).length > 40) {
+    return res.status(400).json({ error: 'O nome de perfil deve ter entre 1 e 40 caracteres.' });
+  }
+
+  const validateProfileImage = (dataUrl, maxBytes, label) => {
+    if (dataUrl === null || dataUrl === '') return null;
+    if (
+      typeof dataUrl !== 'string' ||
+      !/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(dataUrl)
+    ) {
+      throw new Error(`${label} deve ser uma imagem PNG, JPEG ou WebP válida.`);
+    }
+
+    const mimeType = dataUrl.slice(11, dataUrl.indexOf(';'));
+    const encodedImage = dataUrl.slice(dataUrl.indexOf(',') + 1);
+    const imageBytes = Buffer.from(encodedImage, 'base64');
+    const validImageSignature = mimeType === 'jpeg'
+      ? imageBytes[0] === 0xff && imageBytes[1] === 0xd8 && imageBytes[2] === 0xff
+      : mimeType === 'png'
+        ? imageBytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+        : imageBytes.toString('ascii', 0, 4) === 'RIFF' && imageBytes.toString('ascii', 8, 12) === 'WEBP';
+    if (imageBytes.length > maxBytes || imageBytes.toString('base64') !== encodedImage || !validImageSignature) {
+      throw new Error(`${label} inválido ou maior que ${Math.floor(maxBytes / 1024)} KB.`);
+    }
+    return dataUrl;
+  };
+
+  if (profilePicture === undefined || profileBanner === undefined) {
+    return res.status(400).json({ error: 'Envie a foto e o banner atuais ou remova-os antes de salvar.' });
+  }
+
+  let normalizedPicture;
+  let normalizedBanner;
+  try {
+    normalizedPicture = validateProfileImage(profilePicture, MAX_PROFILE_IMAGE_BYTES, 'Foto de perfil');
+    normalizedBanner = validateProfileImage(profileBanner, MAX_PROFILE_BANNER_BYTES, 'Banner');
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+
+  await execute(
+    'UPDATE users SET display_name = ?, profile_picture = ?, profile_banner = ? WHERE id = ?',
+    [normalizedName, normalizedPicture, normalizedBanner, req.session.userId]
+  );
+
+  const user = await getRow(
+    'SELECT id, username, display_name, profile_picture, profile_banner, email, role FROM users WHERE id = ?',
+    [req.session.userId]
+  );
+  if (!user) {
+    return res.status(404).json({ error: 'Conta não encontrada.' });
+  }
+
+  res.json({ message: 'Perfil atualizado com sucesso.', user: getSafeUser(user) });
+}));
 
 app.post('/api/logout', (req, res) => {
   req.session.destroy(() => {
@@ -423,17 +474,27 @@ app.post('/api/logout', (req, res) => {
   });
 });
 
-app.get('/api/dashboard', requireAuth, (req, res) => {
-  const data = getDashboardData(req.session.userId);
+app.get('/api/dashboard', requireAuth, asyncRoute(async (req, res) => {
+  const data = await getDashboardData(req.session.userId);
   res.json(data);
-});
+}));
 
-app.get('/api/achievements', requireAuth, (req, res) => {
-  awardAchievements(req.session.userId);
+app.get('/api/profile', requireAuth, asyncRoute(async (req, res) => {
+  await awardAchievements(req.session.userId);
+  const data = await getDashboardData(req.session.userId);
+  res.json({
+    user: data.user,
+    stats: data.stats,
+    recentAchievements: data.achievements.slice(0, 8),
+    recentGames: data.recent
+  });
+}));
+
+app.get('/api/achievements', requireAuth, asyncRoute(async (req, res) => {
+  await awardAchievements(req.session.userId);
 
   const unlockedAchievements = new Map(
-    db.prepare('SELECT badge, created_at FROM achievements WHERE user_id = ?')
-      .all(req.session.userId)
+    (await getRows('SELECT badge, created_at FROM achievements WHERE user_id = ?', [req.session.userId]))
       .map((achievement) => [achievement.badge, achievement.created_at])
   );
 
@@ -448,9 +509,9 @@ app.get('/api/achievements', requireAuth, (req, res) => {
     unlocked: achievements.filter((achievement) => achievement.unlocked).length,
     achievements
   });
-});
+}));
 
-app.post('/api/game-result', requireAuth, (req, res) => {
+app.post('/api/game-result', requireAuth, asyncRoute(async (req, res) => {
   const { game, difficulty, score, correctAnswers, totalQuestions } = req.body;
 
   if (
@@ -471,23 +532,28 @@ app.post('/api/game-result', requireAuth, (req, res) => {
     return res.status(400).json({ error: 'A pontuação não corresponde às respostas informadas.' });
   }
 
-  const result = db.prepare(
-    'INSERT INTO game_results (user_id, game, difficulty, score, correct_answers, total_questions) VALUES (?, ?, ?, ?, ?, ?)'
-  ).run(req.session.userId, game, difficulty, score, correctAnswers, totalQuestions);
+  const result = await execute(
+    'INSERT INTO game_results (user_id, game, difficulty, score, correct_answers, total_questions) VALUES (?, ?, ?, ?, ?, ?)',
+    [req.session.userId, game, difficulty, score, correctAnswers, totalQuestions]
+  );
 
-  awardAchievements(req.session.userId);
+  await awardAchievements(req.session.userId);
 
-  const dashboard = getDashboardData(req.session.userId);
+  const dashboard = await getDashboardData(req.session.userId);
 
   res.status(201).json({
     message: 'Resultado salvo com sucesso.',
-    insertedId: result.lastInsertRowid,
+    insertedId: result.insertId,
     dashboard
   });
-});
+}));
 
 app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.get('/perfil', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'profile.html'));
 });
 
 app.get('/conquistas', (req, res) => {
@@ -498,6 +564,32 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`MathPlay Solutions running on http://localhost:${PORT}`);
+app.use((error, req, res, next) => {
+  console.error(error);
+  if (res.headersSent) return next(error);
+  res.status(500).json({ error: 'Erro interno ao acessar o banco de dados.' });
+});
+
+async function startServer() {
+  await db.query('SELECT 1');
+  const [columns] = await db.query('SHOW COLUMNS FROM users');
+  const existingColumns = new Set(columns.map((column) => column.Field));
+  if (!existingColumns.has('display_name')) {
+    await db.query('ALTER TABLE users ADD COLUMN display_name VARCHAR(40) NULL AFTER username');
+  }
+  if (!existingColumns.has('profile_picture')) {
+    await db.query('ALTER TABLE users ADD COLUMN profile_picture MEDIUMTEXT NULL AFTER display_name');
+  }
+  if (!existingColumns.has('profile_banner')) {
+    await db.query('ALTER TABLE users ADD COLUMN profile_banner MEDIUMTEXT NULL AFTER profile_picture');
+  }
+  app.listen(PORT, () => {
+    console.log(`MathPlay Solutions running on http://localhost:${PORT}`);
+  });
+}
+
+startServer().catch(async (error) => {
+  console.error('Não foi possível conectar ao MySQL. Confira as variáveis DB_* e importe database/schema.sql.', error);
+  await db.end();
+  process.exitCode = 1;
 });

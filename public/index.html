@@ -8,12 +8,14 @@
       content="MathPlay Solutions é uma plataforma educacional gamificada para aprendizagem de matemática do Ensino Fundamental II."
     />
     <title>MathPlay Solutions</title>
+    <link rel="icon" type="image/png" href="/rocckouware-logo.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
+    <script src="/theme.js"></script>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
@@ -32,7 +34,13 @@
           <a href="#dashboard">Painel</a>
           <a href="/conquistas">Conquistas</a>
         </nav>
-        <button id="authButton" class="primary-button" onclick="window.location.href='/login'">Entrar</button>
+        <button class="theme-toggle" type="button" aria-pressed="false"></button>
+        <a id="profileLink" class="profile-link-button" href="/perfil" hidden>
+          <img id="profileLinkImage" class="profile-link-image" alt="" aria-hidden="true" hidden />
+          <span id="profileLinkFallback" class="profile-link-fallback" aria-hidden="true"></span>
+          <span id="profileLinkName" class="profile-link-name"></span>
+        </a>
+        <button id="authButton" class="primary-button">Entrar</button>
       </div>
     </header>
 
@@ -40,7 +48,7 @@
       <section id="home" class="hero">
         <div class="hero-copy">
           <span class="eyebrow">Aprenda matemática jogando!</span>
-          <h1>Aprender matemática nunca foi tão divertido.</h1>
+          <h1 id="heroTitle">Aprender matemática nunca foi tão divertido.</h1>
           <p>
             Uma plataforma interativa que transforma desafios matemáticos em missões,
             recompensas e progresso contínuo para alunos do Ensino Fundamental II.
@@ -134,7 +142,7 @@
 
       <section id="dashboard" class="section-block dashboard-panel hidden">
         <div class="section-heading">
-          <p class="eyebrow">Perfil do aluno</p>
+          <p class="eyebrow">Seu progresso</p>
           <h2>Painel de evolução</h2>
         </div>
 

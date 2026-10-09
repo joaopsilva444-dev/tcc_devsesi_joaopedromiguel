@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Veja seu perfil, suas conquistas recentes e seus pontos no MathPlay." />
+    <title>Meu perfil | MathPlay Solutions</title>
+    <link rel="icon" type="image/png" href="/rocckouware-logo.png" />
+    <script src="/theme.js"></script>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/profile.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container nav-wrap">
+        <a class="brand" href="/" aria-label="MathPlay Solutions — voltar ao início">
+          <img class="brand-logo" src="/rocckouware-logo.png" alt="Logo da Rocckouware" />
+          <span class="brand-copy">
+            <strong>MathPlay Solutions</strong>
+            <span>por Rocckouware</span>
+          </span>
+        </a>
+        <button class="theme-toggle" type="button" aria-pressed="false"></button>
+      </div>
+    </header>
+
+    <main class="container profile-page">
+      <div class="profile-page-heading">
+        <a class="back-link profile-back-link" href="/">← Voltar ao início</a>
+        <div>
+          <p class="eyebrow">Comunidade MathPlay</p>
+          <h1>Meu perfil</h1>
+        </div>
+      </div>
+
+      <div class="profile-tabs" role="tablist" aria-label="Seções do perfil">
+        <button id="profileOverviewTab" class="profile-tab active" type="button" role="tab" aria-selected="true" aria-controls="profileOverview">Perfil</button>
+        <button id="profileEditTab" class="profile-tab" type="button" role="tab" aria-selected="false" aria-controls="profileEditor">Editar perfil</button>
+      </div>
+
+      <section id="profileOverview" class="profile-overview" role="tabpanel" aria-labelledby="profileOverviewTab">
+        <div class="profile-hero-card">
+          <div class="profile-hero-cover" aria-hidden="true">
+            <img id="profileOverviewBanner" alt="" hidden />
+          </div>
+          <div class="profile-hero-content">
+            <div class="profile-avatar-large">
+              <img id="profileOverviewImage" alt="" hidden />
+              <span id="profileOverviewFallback" aria-hidden="true">M</span>
+            </div>
+            <div class="profile-identity">
+              <p class="eyebrow">Jogador MathPlay</p>
+              <h2 id="profileOverviewName">Carregando perfil...</h2>
+              <p id="profileUsername" class="profile-username"></p>
+            </div>
+            <button id="editProfileShortcut" class="secondary-button" type="button">Editar perfil</button>
+          </div>
+        </div>
+
+        <div class="profile-stat-grid" aria-label="Resumo de progresso">
+          <article class="profile-stat-card">
+            <span>Pontos conquistados</span>
+            <strong id="profilePoints">0</strong>
+            <small>Soma das pontuações das partidas</small>
+          </article>
+          <article class="profile-stat-card">
+            <span>Partidas concluídas</span>
+            <strong id="profileGames">0</strong>
+            <small>Desafios registrados no MathPlay</small>
+          </article>
+          <article class="profile-stat-card">
+            <span>Precisão média</span>
+            <strong id="profileAverage">0%</strong>
+            <small>Desempenho nas partidas</small>
+          </article>
+        </div>
+
+        <div class="profile-wall">
+          <section class="profile-wall-card" aria-labelledby="recentAchievementsTitle">
+            <div class="profile-wall-heading">
+              <div>
+                <p class="eyebrow">Mural do jogador</p>
+                <h2 id="recentAchievementsTitle">Conquistas recentes</h2>
+              </div>
+              <a class="secondary-button" href="/conquistas">Todas as conquistas</a>
+            </div>
+            <div id="recentAchievements" class="profile-achievement-grid">
+              <p class="profile-empty-state">Carregando conquistas...</p>
+            </div>
+          </section>
+          <section class="profile-wall-card" aria-labelledby="recentGamesTitle">
+            <div class="profile-wall-heading">
+              <div>
+                <p class="eyebrow">Sua atividade</p>
+                <h2 id="recentGamesTitle">Partidas recentes</h2>
+              </div>
+            </div>
+            <div id="recentProfileGames" class="profile-activity-list">
+              <p class="profile-empty-state">Carregando partidas...</p>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section id="profileEditor" class="profile-editor" role="tabpanel" aria-labelledby="profileEditTab" hidden>
+        <div class="profile-editor-heading">
+          <p class="eyebrow">Sua conta</p>
+          <h2>Editar perfil</h2>
+          <p>O nome escolhido aparece na saudação da página inicial.</p>
+        </div>
+        <form id="profileForm" class="profile-card">
+          <div class="profile-edit-preview" aria-label="Prévia do perfil">
+            <div class="profile-edit-banner">
+              <img id="profileBannerPreview" alt="" hidden />
+            </div>
+            <div class="profile-photo-preview" aria-label="Prévia da foto de perfil">
+              <img id="profilePreviewImage" alt="" hidden />
+              <span id="profilePreviewFallback" aria-hidden="true">M</span>
+            </div>
+          </div>
+          <div class="profile-fields">
+            <label for="profileDisplayName">
+              Nome de perfil
+              <input id="profileDisplayName" name="displayName" type="text" maxlength="40" autocomplete="nickname" required />
+            </label>
+            <label for="profilePictureInput">
+              Foto de perfil
+              <input id="profilePictureInput" name="profilePicture" type="file" accept="image/png,image/jpeg,image/webp" />
+            </label>
+            <p class="profile-help">PNG, JPEG ou WebP. A foto será otimizada antes de salvar.</p>
+            <label for="profileBannerInput">
+              Banner do perfil
+              <input id="profileBannerInput" name="profileBanner" type="file" accept="image/png,image/jpeg,image/webp" />
+            </label>
+            <p class="profile-help">O banner aparece atrás da sua foto no perfil. A imagem será otimizada.</p>
+            <div class="profile-actions">
+              <button id="removeProfilePicture" class="secondary-button" type="button" hidden>Remover foto</button>
+              <button id="removeProfileBanner" class="secondary-button" type="button" hidden>Remover banner</button>
+              <button id="saveProfileButton" class="primary-button" type="submit">Salvar perfil</button>
+            </div>
+            <p id="profileMessage" class="profile-message" role="status" aria-live="polite"></p>
+          </div>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>
